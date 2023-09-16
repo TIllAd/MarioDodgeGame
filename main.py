@@ -22,11 +22,12 @@ POWERUP_VEL = 1
 
 class GoodEffects(Enum):
     Invincibility = 1
+    SmallSize = 2
     #
     # SmallSize = 2
 
 
-# Create 8 sound channels (adjust as needed)
+
 sound_channels = [pygame.mixer.Channel(i) for i in range(8)]
 
 
@@ -48,8 +49,7 @@ BG = pygame.image.load("Media/Graphics/MarioBG.jpg")
 BG = pygame.transform.scale(BG, (WIDTH, HEIGHT))
 
 player_image = pygame.image.load("Media/Graphics/Mario.png")
-player_image = pygame.transform.scale(
-    player_image, (PLAYER_WIDTH, PLAYER_HEIGHT))
+player_image = pygame.transform.scale(player_image,(PLAYER_WIDTH,PLAYER_HEIGHT) )
 
 star_image = pygame.image.load("Media/Graphics/GreenShell.png")
 star_image = pygame.transform.scale(star_image, (STAR_WIDTH, STAR_HEIGHT))
@@ -92,23 +92,43 @@ def set_image_alpha(image, alpha):
 
     return image.copy().convert_alpha()
 
+def halfPLayerSize(player, current_player_image):
+    
+    player.height /= 2
+    player.width /= 2
+    
+    
+    scaled_image = pygame.transform.scale(current_player_image, (player.width, player.height))
+    return player, scaled_image
+
+def doublePlayerSize(player, current_player_image):
+    player.height *= 2
+    player.width *= 2
+    scaled_image = pygame.transform.scale(current_player_image, (PLAYER_WIDTH*2, PLAYER_HEIGHT*2))
+    return player, scaled_image
 
 def main():
     run = True
 
+
+    original_player_image = player_image  # Save the original image
+    original_player_size = (PLAYER_WIDTH, PLAYER_HEIGHT)
+
     player = pygame.Rect(200, HEIGHT - PLAYER_HEIGHT,
                          PLAYER_WIDTH, PLAYER_HEIGHT)
     player_invincible = False
+    player_smallsize = False
     clock = pygame.time.Clock()
     start_time = time.time()
     elapsed_time = 0
     selected_good_effect = None
-    effect_duration = 0
+    invincibility_effect_duration = 0
+    small_size_duration = 0
 
     star_add_increment = 2000
     star_count = 0
 
-    powerup_add_increment = 2000
+    powerup_add_increment = 3000
     powerup_count = 0
     powerups = []
     hitGood = False
@@ -116,7 +136,7 @@ def main():
     stars = []
     hitBAD = False
     is_blinking = False
-    blink_frequency = 2
+    
 
     while run:
 
@@ -161,28 +181,50 @@ def main():
             player.y += PLAYER_VEL / 2.5
 
         if player_invincible:
-            effect_duration -= clock.tick(60) / 1000
+            invincibility_effect_duration -= clock.tick(60) / 1000
           
+            print(invincibility_effect_duration)
             
-            
-            alpha = max(0, int((effect_duration / 150) * 255))
+            alpha = max(0, int((invincibility_effect_duration / 150) * 255))
             current_player_image = set_image_alpha(player_image_powerup, alpha)
         
-            if effect_duration < 1:
+            if invincibility_effect_duration < 1:
                 is_blinking = not is_blinking
                 if is_blinking:
-                    alpha = max(0, int((effect_duration / 150) * 255))
+                    alpha = max(0, int((invincibility_effect_duration / 150) * 255))
                     current_player_image = set_image_alpha(player_image_powerup, alpha)
                 else:
                     current_player_image = player_image
                
 
-            print(effect_duration)
+           
 
-        if effect_duration <= 0:
+        if player_smallsize:
+            
+            if PLAYER_HEIGHT == player.height and PLAYER_WIDTH == player.width:
+                player, current_player_image = halfPLayerSize(player, current_player_image)
+            
+            print(small_size_duration)
+            
+            if small_size_duration <= 0:
+                player_smallsize = False  
+                current_player_image = player_image
+                player.height = PLAYER_HEIGHT
+                player.width = PLAYER_WIDTH
+           
+
+            small_size_duration -= clock.tick(60) / 1000
+            
+        
+
+
+        if invincibility_effect_duration <= 0:
             player_invincible = False
-            effect_duration = 0
+            
+
+            invincibility_effect_duration = 0
             current_player_image = player_image
+         
 
         for powerup in powerups[:]:
             powerup.y += POWERUP_VEL
@@ -221,18 +263,21 @@ def main():
 
         if hitGood:
 
-            # powerup_channel = pygame.mixer.find_channel()
-            # powerup_channel.play(powerup_sound, loops=-1, )
+          
             powerup_channel = sound_channels[1]  # Use the second sound channel
             powerup_channel.play(powerup_sound, 1)
 
             selected_good_effect = random.choice(list(GoodEffects))
 
+            if selected_good_effect == GoodEffects.SmallSize:
+                player_smallsize = True
+                small_size_duration = 4
             if selected_good_effect == GoodEffects.Invincibility:
                 player_invincible = True
-                Invincibility_effect_duration = 15
+                invincibility_effect_duration = 1
+           
 
-            effect_duration = 5  # Set the duration to 15 seconds
+              
             hitGood = False
 
         draw(player, elapsed_time, stars, powerups, current_player_image)
