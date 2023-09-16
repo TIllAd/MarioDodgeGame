@@ -7,7 +7,7 @@ pygame.mixer.init()
 WIDTH, HEIGHT = 1000, 800
 
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Buring in Hell")
+pygame.display.set_caption("MarioDodgeGame")
 
 PLAYER_WIDTH = 40
 PLAYER_HEIGHT = 60
@@ -27,7 +27,9 @@ game_music_channel.play(game_music, loops=-1)
 
 music2 = pygame.mixer.Sound("GameLossSound.mp3")  
 
-BG = pygame.image.load("FireBackGround.jpg")
+BG = pygame.image.load("MarioBG.jpg")
+BG = pygame.transform.scale(BG, (WIDTH, HEIGHT))
+
 player_image = pygame.image.load("Mario.png")
 star_image = pygame.image.load("GreenShell.png")
 
@@ -98,6 +100,8 @@ def main():
             player.x += PLAYER_VEL
         if keys[pygame.K_UP] and player.y > 0:
             player.y -= PLAYER_VEL
+        if keys[pygame.K_DOWN] and player.y + player.height + PLAYER_VEL < HEIGHT:
+            player.y +=PLAYER_VEL
 
         if player.y + player.height <= HEIGHT:
             player.y += PLAYER_VEL / 2.5
