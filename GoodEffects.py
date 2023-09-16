@@ -1,0 +1,1 @@
+class GoodEffects(Enum)

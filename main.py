@@ -34,31 +34,31 @@ sound_channels = [pygame.mixer.Channel(i) for i in range(8)]
 # game_music = pygame.mixer.Sound("GameSound.mp3")
 
 
-game_music = pygame.mixer.Sound("GameSound.mp3")
+game_music = pygame.mixer.Sound("Media/Audio/GameSound.mp3")
 game_music_channel = pygame.mixer.find_channel()
 game_music_channel.play(game_music, loops=-1)
 
 
-gameloss_sound = pygame.mixer.Sound("GameLossSound.mp3")
+gameloss_sound = pygame.mixer.Sound("Media/Audio/GameLossSound.mp3")
 
 # powerup_sound = pygame.mixer.Sound("Mario Powerup.wav")
-powerup_sound = pygame.mixer.Sound("MarioPowerUp.mp3")
+powerup_sound = pygame.mixer.Sound("Media/Audio/MarioPowerUp.mp3")
 
-BG = pygame.image.load("MarioBG.jpg")
+BG = pygame.image.load("Media/Graphics/MarioBG.jpg")
 BG = pygame.transform.scale(BG, (WIDTH, HEIGHT))
 
-player_image = pygame.image.load("Mario.png")
+player_image = pygame.image.load("Media/Graphics/Mario.png")
 player_image = pygame.transform.scale(
     player_image, (PLAYER_WIDTH, PLAYER_HEIGHT))
 
-star_image = pygame.image.load("GreenShell.png")
+star_image = pygame.image.load("Media/Graphics/GreenShell.png")
 star_image = pygame.transform.scale(star_image, (STAR_WIDTH, STAR_HEIGHT))
 
-powerup_image = pygame.image.load("PowerUp.png")
+powerup_image = pygame.image.load("Media/Graphics/PowerUp.png")
 powerup_image = pygame.transform.scale(
     powerup_image, (STAR_WIDTH, STAR_HEIGHT))
 
-player_image_powerup = pygame.image.load("MarioPowerUp.png")
+player_image_powerup = pygame.image.load("Media/Graphics/MarioPowerUp.png")
 player_image_powerup = pygame.transform.scale(
     player_image_powerup, (PLAYER_WIDTH, PLAYER_HEIGHT))
 
@@ -108,7 +108,7 @@ def main():
     star_add_increment = 2000
     star_count = 0
 
-    powerup_add_increment = 1000
+    powerup_add_increment = 2000
     powerup_count = 0
     powerups = []
     hitGood = False
@@ -125,7 +125,7 @@ def main():
         elapsed_time = time.time() - start_time
 
         if powerup_count > powerup_add_increment:
-            for _ in range(3):
+            for _ in range(1):
                 powerup_x = random.randint(0, WIDTH - STAR_WIDTH)
                 powerup = pygame.Rect(
                     powerup_x, -STAR_HEIGHT, STAR_WIDTH, STAR_HEIGHT)
