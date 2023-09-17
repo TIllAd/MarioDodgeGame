@@ -44,6 +44,8 @@ game_music_channel.play(game_music, loops=-1)
 
 gameloss_sound = pygame.mixer.Sound("Media/Audio/GameLossSound.mp3")
 
+player_healthup = pygame.mixer.Sound("Media/Audio/PlayerHealthUp.mp3")
+
 # powerup_sound = pygame.mixer.Sound("Mario Powerup.wav")
 powerup_sound = pygame.mixer.Sound("Media/Audio/MarioPowerUp.mp3")
 
@@ -292,6 +294,8 @@ def main():
                 invincibility_effect_duration = 1
             if selected_good_effect == GoodEffects.ExtraLife:
                 player_health += 1
+                gameloss_channel = sound_channels[2] 
+                gameloss_channel.play(player_healthup, 1)
            
 
               
