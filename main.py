@@ -2,6 +2,7 @@ import pygame
 import time
 import random
 from enum import Enum
+import math
 pygame.font.init()
 pygame.mixer.init()
 
@@ -13,6 +14,11 @@ pygame.display.set_caption("MarioDodgeGame")
 PLAYER_WIDTH = 40
 PLAYER_HEIGHT = 60
 PLAYER_VEL = 5
+
+BOWSER_WIDTH = 100
+BOWSER_HEIGHT = 150
+
+
 STAR_HEIGHT = 10
 STAR_WIDTH = 20
 STAR_VEL = 3
@@ -33,24 +39,20 @@ class GoodEffects(Enum):
 sound_channels = [pygame.mixer.Channel(i) for i in range(8)]
 
 
-# game_music = pygame.mixer.music.load("GameSound.mp3")
-# game_music = pygame.mixer.Sound("GameSound.mp3")
-
-
 game_music = pygame.mixer.Sound("Media/Audio/GameSound.mp3")
 game_music_channel = pygame.mixer.find_channel()
 game_music_channel.play(game_music, loops=-1)
-
-
 gameloss_sound = pygame.mixer.Sound("Media/Audio/GameLossSound.mp3")
-
 player_healthup = pygame.mixer.Sound("Media/Audio/PlayerHealthUp.mp3")
-
-# powerup_sound = pygame.mixer.Sound("Mario Powerup.wav")
 powerup_sound = pygame.mixer.Sound("Media/Audio/MarioPowerUp.mp3")
 
 BG = pygame.image.load("Media/Graphics/MarioBG.jpg")
 BG = pygame.transform.scale(BG, (WIDTH, HEIGHT))
+BG_Bowser = pygame.image.load("Media/Graphics/Bossfight.png")
+BG_Bowser = pygame.transform.scale(BG_Bowser,(WIDTH, HEIGHT))
+
+bowser_image = pygame.image.load("Media/Graphics/Bowser.png")
+bowser_image = pygame.transform.scale(bowser_image,(BOWSER_WIDTH, BOWSER_HEIGHT))
 
 player_image = pygame.image.load("Media/Graphics/Mario.png")
 player_image = pygame.transform.scale(player_image,(PLAYER_WIDTH,PLAYER_HEIGHT) )
@@ -73,11 +75,9 @@ FONT = pygame.font.SysFont("comicsans", 30)
 def draw(player, elapsed_time, stars, powerups, current_player_image, player_health):
 
     WIN.blit(BG, (0, 0))
-    # pygame.draw.rect(WIN, (0, 0, 0), player)
     player_outline = player.copy()
     player_outline.inflate_ip(5, 5)
     pygame.draw.rect(WIN, (255, 0, 0), player_outline, 2)
-
     WIN.blit(current_player_image, (player.x, player.y))
 
     time_text = FONT.render(f"Time: {round(elapsed_time)}s", 1, "white")
@@ -93,6 +93,11 @@ def draw(player, elapsed_time, stars, powerups, current_player_image, player_hea
 
     pygame.display.update()
 
+def drawBossBowser(player, player_health, Bowser):
+    WIN.blit(BG_Bowser, (0,0))
+    WIN.blit(bowser_image, (Bowser.x, Bowser.y))
+    WIN.blit(player_image, (player.x, player.y))
+    pygame.display.update()
 
 def set_image_alpha(image, alpha):
 
@@ -113,6 +118,21 @@ def doublePlayerSize(player, current_player_image):
     scaled_image = pygame.transform.scale(current_player_image, (PLAYER_WIDTH*2, PLAYER_HEIGHT*2))
     return player, scaled_image
 
+def setBowserState(state):
+    if state == "Idle":
+        bowser_idle_start_time = time.time()
+    else:
+        bowser_idle_start_time = None
+    
+
+    bowser_state = state
+    
+    return bowser_state , bowser_idle_start_time
+
+
+    
+    
+
 def main():
     run = True
 
@@ -122,6 +142,8 @@ def main():
 
     player = pygame.Rect(200, HEIGHT - PLAYER_HEIGHT,
                          PLAYER_WIDTH, PLAYER_HEIGHT)
+    
+    Bowser = pygame.Rect(300, HEIGHT - BOWSER_HEIGHT, BOWSER_WIDTH, BOWSER_HEIGHT)
     player_invincible = False
     player_smallsize = False
     clock = pygame.time.Clock()
@@ -145,6 +167,7 @@ def main():
     player_health = 3
     player_play_again = False
     player_game_loss  = False
+  
 
     while run:
 
@@ -301,6 +324,147 @@ def main():
               
             hitGood = False
 
+        if elapsed_time > 1:
+            battle_master1 = True
+            current_time = time.time()
+
+            print("You came for the master HUA")
+
+            bowser_state , bowser_idle_start_time = setBowserState("Idle")
+
+            while battle_master1:
+                start_time = time.time()
+                clock.tick(30)
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        run = False
+                        battle_master1 = False
+                        break
+
+                keys = pygame.key.get_pressed()
+                if keys[pygame.K_LEFT] and player.x - PLAYER_VEL >= 0:
+                    player.x -= PLAYER_VEL
+                if keys[pygame.K_RIGHT] and player.x + PLAYER_VEL + player.width <= WIDTH:
+                    player.x += PLAYER_VEL
+                if keys[pygame.K_UP] and player.y > 0:
+                    player.y -= PLAYER_VEL
+                if keys[pygame.K_DOWN] and player.y + player.height + PLAYER_VEL < HEIGHT:
+                    player.y += PLAYER_VEL
+
+                if player.y + player.height <= HEIGHT:
+                     player.y += PLAYER_VEL / 2.5
+                
+
+              
+                
+                bowser_charge_duration = 3
+                bowser_charge_speed = 5
+                bowser_idle_duration = 5
+                bowser_idle_random_move_duration = 2  # Adjust the random move duration as needed
+                bowser_idle_random_move_start_time = time.time()
+                bowser_idle_random_move_direction = (0, 0)
+                bowser_idle_speed = 3
+                
+
+                tmp = ""
+                
+                if bowser_state == "Idle":
+                   
+                    time_elapsed_Bowser = time.time() - bowser_idle_start_time  # Calculate elapsed time
+                    print( time_elapsed_Bowser)
+
+                    if time_elapsed_Bowser >= bowser_idle_duration:
+                       
+                        bowser_state, tmp = setBowserState("Charging")
+                        
+                        
+                        
+                    else:
+
+                        destination_random_x = random.choice([0, WIDTH, 0, WIDTH])
+                        destination_random_y = random.choice([0, HEIGHT, 0, HEIGHT])
+                        bowser_idle_speed = 4
+                      
+
+                        direction_x = destination_random_x - Bowser.x
+                        direction_y = destination_random_y - Bowser.y
+
+                        distance = math.sqrt(direction_x ** 2 + direction_y ** 2)
+
+                        if distance > 0:
+                            direction_x /= distance
+                            direction_y /= distance 
+                        
+                        Bowser.x += direction_x * bowser_idle_speed
+                        Bowser.y += direction_y * bowser_idle_speed
+
+                if bowser_state == "Charging":
+                    bowser_charging_speed = 4
+                    print ("charging")
+
+                  
+                    direction_x = player.x - Bowser.x
+                    direction_y = player.y - Bowser.y
+
+                    
+                    distance = math.sqrt(direction_x ** 2 + direction_y ** 2)
+
+                    if distance > 0:
+                        direction_x /= distance
+                        direction_y /= distance
+
+                    Bowser.x += direction_x * bowser_charging_speed
+                    Bowser.y += direction_y * bowser_charging_speed
+
+                    if(distance <= bowser_charging_speed):
+                        bowser_state, _ = setBowserState("Angry")
+                    
+
+                if(bowser_state == "Angry"):
+
+                    
+
+                    
+
+                    
+                    
+
+
+
+                  
+
+                
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                print(bowser_state)
+
+                drawBossBowser(player, player_health, Bowser)         
+
+
+        
          
 
         draw(player, elapsed_time, stars, powerups, current_player_image, player_health)
