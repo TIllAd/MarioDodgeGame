@@ -23,6 +23,8 @@ POWERUP_VEL = 1
 class GoodEffects(Enum):
     Invincibility = 1
     SmallSize = 2
+    ExtraLife = 3
+
     #
     # SmallSize = 2
 
@@ -66,7 +68,7 @@ current_player_image = player_image
 FONT = pygame.font.SysFont("comicsans", 30)
 
 
-def draw(player, elapsed_time, stars, powerups, current_player_image):
+def draw(player, elapsed_time, stars, powerups, current_player_image, player_health):
 
     WIN.blit(BG, (0, 0))
     # pygame.draw.rect(WIN, (0, 0, 0), player)
@@ -77,7 +79,9 @@ def draw(player, elapsed_time, stars, powerups, current_player_image):
     WIN.blit(current_player_image, (player.x, player.y))
 
     time_text = FONT.render(f"Time: {round(elapsed_time)}s", 1, "white")
+    health_text = FONT.render(f"Health: {player_health}", 1 , "red")
     WIN.blit(time_text, (10, 10))
+    WIN.blit(health_text,(WIDTH - 200, 10))
 
     for star in stars:
         WIN.blit(star_image, (star.x, star.y))
@@ -136,12 +140,14 @@ def main():
     stars = []
     hitBAD = False
     is_blinking = False
-    
+    player_health = 3
+    player_play_again = False
+    player_game_loss  = False
 
     while run:
 
         star_count += clock.tick(60)
-        powerup_count += clock.tick(400)
+        powerup_count += clock.tick(40)
         elapsed_time = time.time() - start_time
 
         if powerup_count > powerup_add_increment:
@@ -244,22 +250,31 @@ def main():
                 break
 
         if hitBAD and player_invincible == False:
-            lost_text = FONT.render("You Lost!", 1, "white")
-            WIN.blit(lost_text, (WIDTH/2 - lost_text.get_width() /
-                     2, HEIGHT/2 - lost_text.get_height()/2))
-            pygame.display.update()
-            game_music.stop()
 
-            # gameloss_channel = pygame.mixer.find_channel()
-            # gameloss_channel.play(gameloss_sound, loops=-1, )
+            player_health -= 1
+            
 
-            gameloss_channel = sound_channels[0]  # Use the first sound channel
-            gameloss_channel.play(gameloss_sound, loops=-1)
+            print("subtracting player health")
 
-            pygame.time.delay(4000)
-            break
-        elif hitBAD and player_invincible == True:
+            if player_health < 0:
+                player_game_loss = True
+                lost_text = FONT.render("You Lost!", 1, "white")
+                WIN.blit(lost_text, (WIDTH/2 - lost_text.get_width() /
+                        2, HEIGHT/2 - lost_text.get_height()/2))
+                pygame.display.update()
+                game_music.stop()
+
+                gameloss_channel = sound_channels[0] 
+                gameloss_channel.play(gameloss_sound, loops=-1)
+
+                pygame.time.delay(4000)
+
+                break
             hitBAD = False
+        
+       
+
+
 
         if hitGood:
 
@@ -275,12 +290,19 @@ def main():
             if selected_good_effect == GoodEffects.Invincibility:
                 player_invincible = True
                 invincibility_effect_duration = 1
+            if selected_good_effect == GoodEffects.ExtraLife:
+                player_health += 1
            
 
               
             hitGood = False
 
-        draw(player, elapsed_time, stars, powerups, current_player_image)
+         
+
+        draw(player, elapsed_time, stars, powerups, current_player_image, player_health)
+        
+        
+
 
     pygame.quit()
 
