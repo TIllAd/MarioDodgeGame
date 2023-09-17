@@ -119,17 +119,33 @@ def doublePlayerSize(player, current_player_image):
     return player, scaled_image
 
 def setBowserState(state):
+    
     if state == "Idle":
         bowser_idle_start_time = time.time()
-    else:
-        bowser_idle_start_time = None
+        return "Idle" , time.time()
+    elif state == "Charging":
+        bowser_charging_start_time = time.time()
+        return "Charging", time.time()
+    elif state == "Angry":
+        return "Angry" , time.time()
     
 
     bowser_state = state
     
     return bowser_state , bowser_idle_start_time
 
+def GameLoss():
+    player_game_loss = True
+    lost_text = FONT.render("You Lost!", 1, "white")
+    WIN.blit(lost_text, (WIDTH/2 - lost_text.get_width() /
+                        2, HEIGHT/2 - lost_text.get_height()/2))
+    pygame.display.update()
+    game_music.stop()
 
+    gameloss_channel = sound_channels[0] 
+    gameloss_channel.play(gameloss_sound, loops=-1)
+
+    pygame.time.delay(4000)
     
     
 
@@ -152,7 +168,7 @@ def main():
     selected_good_effect = None
     invincibility_effect_duration = 0
     small_size_duration = 0
-
+    bowser_charging_start_time = 0
     star_add_increment = 2000
     star_count = 0
 
@@ -282,17 +298,7 @@ def main():
             print("subtracting player health")
 
             if player_health < 0:
-                player_game_loss = True
-                lost_text = FONT.render("You Lost!", 1, "white")
-                WIN.blit(lost_text, (WIDTH/2 - lost_text.get_width() /
-                        2, HEIGHT/2 - lost_text.get_height()/2))
-                pygame.display.update()
-                game_music.stop()
-
-                gameloss_channel = sound_channels[0] 
-                gameloss_channel.play(gameloss_sound, loops=-1)
-
-                pygame.time.delay(4000)
+                GameLoss()
 
                 break
             hitBAD = False
@@ -324,7 +330,7 @@ def main():
               
             hitGood = False
 
-        if elapsed_time > 1:
+        if elapsed_time > 10:
             battle_master1 = True
             current_time = time.time()
 
@@ -355,7 +361,11 @@ def main():
                      player.y += PLAYER_VEL / 2.5
                 
 
-              
+                if player.colliderect(Bowser):
+                    GameLoss()
+                    break
+                        
+                    
                 
                 bowser_charge_duration = 3
                 bowser_charge_speed = 5
@@ -371,13 +381,13 @@ def main():
                 if bowser_state == "Idle":
                    
                     time_elapsed_Bowser = time.time() - bowser_idle_start_time  # Calculate elapsed time
-                    print( time_elapsed_Bowser)
+                    
 
                     if time_elapsed_Bowser >= bowser_idle_duration:
                        
-                        bowser_state, tmp = setBowserState("Charging")
+                        bowser_state, bowser_charging_start_time = setBowserState("Charging")
                         
-                        
+
                         
                     else:
 
@@ -399,30 +409,43 @@ def main():
                         Bowser.y += direction_y * bowser_idle_speed
 
                 if bowser_state == "Charging":
-                    bowser_charging_speed = 4
-                    print ("charging")
 
-                  
-                    direction_x = player.x - Bowser.x
-                    direction_y = player.y - Bowser.y
+                    time_elapsed_Bowser = time.time() - bowser_charging_start_time
+
+                    print("Time Elsapes" ,time_elapsed_Bowser)
+
+                    if time_elapsed_Bowser < 4:
+                            # Bowser stands still for 4 seconds
+                            Bowser.x += 0
+                            Bowser.y += 0
+                    else:
+                            
+                        bowser_charging_speed = 4
+                        print ("charging")
 
                     
-                    distance = math.sqrt(direction_x ** 2 + direction_y ** 2)
+                        direction_x = player.x - Bowser.x
+                        direction_y = player.y - Bowser.y
 
-                    if distance > 0:
-                        direction_x /= distance
-                        direction_y /= distance
+                        
+                        distance = math.sqrt(direction_x ** 2 + direction_y ** 2)
 
-                    Bowser.x += direction_x * bowser_charging_speed
-                    Bowser.y += direction_y * bowser_charging_speed
+                        if distance > 0:
+                            direction_x /= distance
+                            direction_y /= distance
 
-                    if(distance <= bowser_charging_speed):
-                        bowser_state, _ = setBowserState("Angry")
+                        Bowser.x += direction_x * bowser_charging_speed
+                        Bowser.y += direction_y * bowser_charging_speed
+                        print(bowser_charging_start_time - time.time())
+                        if(distance <= bowser_charging_speed or time.time()- bowser_charging_start_time  > 10 ):
+                            bowser_state, _ = setBowserState("Angry")
+
+                    
                     
 
                 if(bowser_state == "Angry"):
 
-                    
+                    print("HI")
 
                     
 
