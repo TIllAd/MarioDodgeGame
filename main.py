@@ -219,6 +219,7 @@ def main():
     time_elapsed_countdown = None
    
     current_cd_display = None
+    player_bowser_positioned = False
   
 
     while run:
@@ -412,6 +413,13 @@ def main():
             while battle_master1:
                 start_time = time.time()
                 clock.tick(30)
+
+                #avoid insta lose
+                if(player_bowser_positioned == False):
+                    Bowser.x, Bowser.y = 100 , 100
+                    player.x , player.y = WIDTH -100,  HEIGHT - 100
+                    player_bowser_positioned = True
+
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
                         run = False
