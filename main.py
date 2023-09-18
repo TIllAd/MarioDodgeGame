@@ -34,6 +34,33 @@ class GoodEffects(Enum):
     #
     # SmallSize = 2
 
+class Fireball:
+    def __init__(self, x, y, target_x, target_y):
+        self.x = x
+        self.y = y
+        self.speed = 7  # Adjust the speed as needed
+        self.image = fireball_image  # Load the fireball image
+        # Calculate the velocity towards the target (player)
+        direction_x = target_x - x
+        direction_y = target_y - y
+        distance = math.sqrt(direction_x ** 2 + direction_y ** 2)
+        if distance > 0:
+            self.velocity_x = direction_x / distance * self.speed
+            self.velocity_y = direction_y / distance * self.speed
+
+    def update(self):
+        self.x += self.velocity_x
+        self.y += self.velocity_y
+
+    def out_of_bounds(self):
+        return self.x < 0 or self.x > WIDTH or self.y < 0 or self.y > HEIGHT
+
+    def colliderect(self, rect):
+        return pygame.Rect(self.x, self.y, self.image.get_width(), self.image.get_height()).colliderect(rect)
+
+                    
+                    
+
 
 
 sound_channels = [pygame.mixer.Channel(i) for i in range(8)]
@@ -57,6 +84,9 @@ bowser_transition_screen = pygame.transform.scale(bowser_transition_screen,(WIDT
 
 bowser_image = pygame.image.load("Media/Graphics/Bowser.png")
 bowser_image = pygame.transform.scale(bowser_image,(BOWSER_WIDTH, BOWSER_HEIGHT))
+fireball_image = pygame.image.load("Media/Graphics/fireball.webp")
+fireball_image = pygame.transform.scale(fireball_image,(BOWSER_WIDTH, BOWSER_HEIGHT))
+
 
 player_image = pygame.image.load("Media/Graphics/Mario.png")
 player_image = pygame.transform.scale(player_image,(PLAYER_WIDTH,PLAYER_HEIGHT) )
@@ -103,10 +133,14 @@ def draw(player, elapsed_time, stars, powerups, current_player_image, player_hea
 
     pygame.display.update()
 
-def drawBossBowser(player, player_health, Bowser):
+def drawBossBowser(player, player_health, Bowser, fireballs):
     WIN.blit(BG_Bowser, (0,0))
     WIN.blit(bowser_image, (Bowser.x, Bowser.y))
     WIN.blit(player_image, (player.x, player.y))
+
+    for fireball in fireballs:
+        WIN.blit(fireball_image, (fireball.x, fireball.y))
+
     pygame.display.update()
 
 def draw_transition_screen(background, displaytext):
@@ -166,7 +200,7 @@ def setBowserState(state):
     return bowser_state , bowser_idle_start_time
 
 def GameLoss():
-    player_game_loss = True
+    
     lost_text = FONT.render("You Lost!", 1, "white")
     WIN.blit(lost_text, (WIDTH/2 - lost_text.get_width() /
                         2, HEIGHT/2 - lost_text.get_height()/2))
@@ -177,6 +211,7 @@ def GameLoss():
     gameloss_channel.play(gameloss_sound, loops=-1)
 
     pygame.time.delay(4000)
+    pygame.quit()
     
     
 
@@ -207,7 +242,7 @@ def main():
     powerup_count = 0
     powerups = []
     hitGood = False
-
+    fireballs = []
     stars = []
     hitBAD = False
     is_blinking = False
@@ -220,7 +255,8 @@ def main():
    
     current_cd_display = None
     player_bowser_positioned = False
-  
+    time_between_fireballs = 2
+    fireball_timer = 0
 
     while run:
 
@@ -351,7 +387,7 @@ def main():
         if hitGood:
 
           
-            powerup_channel = sound_channels[1]  #
+            powerup_channel = sound_channels[1]  
             powerup_channel.play(powerup_sound, 1)
 
             selected_good_effect = random.choice(list(GoodEffects))
@@ -402,15 +438,15 @@ def main():
             powerup_channel.play(bowser_start_sound, 0)
 
             battle_master1 = True
-            current_time = time.time()
+            
 
             
 
             print("You came for the master HUA")
 
             bowser_state , bowser_idle_start_time = setBowserState("Idle")
-
-            while battle_master1:
+            
+            while battle_master1 and run:
                 start_time = time.time()
                 clock.tick(30)
 
@@ -526,19 +562,32 @@ def main():
                     
 
                 if(bowser_state == "Angry"):
-
-                    print("HI")
-
                     
+                    fireball_timer += clock.tick(60) /1000
 
-                    
-                    
-
-
-
-                  
-
+                    print("clock tick",clock.tick(60) /10)
+                    print(fireball_timer)
                 
+                    if  fireball_timer>= time_between_fireballs:
+                        # Create a fireball and set its position and velocity
+                        fireball = Fireball(Bowser.x, Bowser.y, player.x, player.y)
+                        fireballs.append(fireball)
+                        fireball_timer = 0  # Reset the timer
+
+                    for fireball in fireballs:
+                        fireball.update()
+                        if fireball.colliderect(player):
+                        # Handle player collision with the fireball (e.g., decrease player health)
+                            GameLoss()
+                        if fireball.out_of_bounds():
+                            fireballs.remove(fireball)
+                        # Remove fireballs that are out of bounds
+                    # Render the fireball on the screen
+
+                # Inside your drawBossBowser function, you can render the fireballs along with Bowser
+                    for fireball in fireballs:
+                        WIN.blit(fireball_image, (fireball.x, fireball.y))
+
 
 
 
@@ -566,7 +615,7 @@ def main():
 
                 print(bowser_state)
 
-                drawBossBowser(player, player_health, Bowser)  
+                drawBossBowser(player, player_health, Bowser, fireballs)  
 
     
 
