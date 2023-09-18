@@ -45,11 +45,15 @@ game_music_channel.play(game_music, loops=-1)
 gameloss_sound = pygame.mixer.Sound("Media/Audio/GameLossSound.mp3")
 player_healthup = pygame.mixer.Sound("Media/Audio/PlayerHealthUp.mp3")
 powerup_sound = pygame.mixer.Sound("Media/Audio/MarioPowerUp.mp3")
+bowser_start_sound = pygame.mixer.Sound("Media/Audio/bowser_start.mp3")
+bowser_laugh_sound = pygame.mixer.Sound("Media/Audio/bowser_laugh.wav")
 
 BG = pygame.image.load("Media/Graphics/MarioBG.jpg")
 BG = pygame.transform.scale(BG, (WIDTH, HEIGHT))
 BG_Bowser = pygame.image.load("Media/Graphics/Bossfight.png")
 BG_Bowser = pygame.transform.scale(BG_Bowser,(WIDTH, HEIGHT))
+bowser_transition_screen = pygame.image.load("Media/Graphics/bowser_transition_screen.jpg")
+bowser_transition_screen = pygame.transform.scale(bowser_transition_screen,(WIDTH, HEIGHT))
 
 bowser_image = pygame.image.load("Media/Graphics/Bowser.png")
 bowser_image = pygame.transform.scale(bowser_image,(BOWSER_WIDTH, BOWSER_HEIGHT))
@@ -59,6 +63,8 @@ player_image = pygame.transform.scale(player_image,(PLAYER_WIDTH,PLAYER_HEIGHT) 
 
 star_image = pygame.image.load("Media/Graphics/GreenShell.png")
 star_image = pygame.transform.scale(star_image, (STAR_WIDTH, STAR_HEIGHT))
+
+
 
 powerup_image = pygame.image.load("Media/Graphics/PowerUp.png")
 powerup_image = pygame.transform.scale(
@@ -72,7 +78,7 @@ current_player_image = player_image
 FONT = pygame.font.SysFont("comicsans", 30)
 
 
-def draw(player, elapsed_time, stars, powerups, current_player_image, player_health):
+def draw(player, elapsed_time, stars, powerups, current_player_image, player_health, current_countdown_number):
 
     WIN.blit(BG, (0, 0))
     player_outline = player.copy()
@@ -91,6 +97,10 @@ def draw(player, elapsed_time, stars, powerups, current_player_image, player_hea
     for powerup in powerups:
         WIN.blit(powerup_image, (powerup.x, powerup.y))
 
+    if(current_countdown_number != None):
+        countdown = FONT.render(f" {round(current_countdown_number)}...", 1, "white")
+        WIN.blit(countdown, (WIDTH/2 , HEIGHT/2))
+
     pygame.display.update()
 
 def drawBossBowser(player, player_health, Bowser):
@@ -98,6 +108,27 @@ def drawBossBowser(player, player_health, Bowser):
     WIN.blit(bowser_image, (Bowser.x, Bowser.y))
     WIN.blit(player_image, (player.x, player.y))
     pygame.display.update()
+
+def draw_transition_screen(background, displaytext):
+    WIN.blit(background, (0, 0))
+    displaytext = FONT.render(f"Boss : {(displaytext)}", 1, "white")
+    
+    WIN.blit(displaytext, (10, 10))
+    pygame.display.update()
+
+def draw_countdown(start_number):
+    print("reached")
+    countdown = FONT.render(f" {round(start_number)}", 1, "white")
+    WIN.blit(countdown, (WIDTH/2 , HEIGHT/2))
+
+    pygame.display.update()
+    
+    print("reached2")
+     
+    
+    
+
+
 
 def set_image_alpha(image, alpha):
 
@@ -181,8 +212,13 @@ def main():
     hitBAD = False
     is_blinking = False
     player_health = 3
+    bowser_fight_starttime = 10
     player_play_again = False
     player_game_loss  = False
+    time_last_countdown = 0
+    time_elapsed_countdown = None
+   
+    current_cd_display = None
   
 
     while run:
@@ -298,7 +334,11 @@ def main():
             print("subtracting player health")
 
             if player_health < 0:
+                gameloss_channel = sound_channels[4] 
+                gameloss_channel.play(gameloss_sound, loops=-1)
+                pygame.time.delay(4000)
                 GameLoss()
+                
 
                 break
             hitBAD = False
@@ -310,7 +350,7 @@ def main():
         if hitGood:
 
           
-            powerup_channel = sound_channels[1]  # Use the second sound channel
+            powerup_channel = sound_channels[1]  #
             powerup_channel.play(powerup_sound, 1)
 
             selected_good_effect = random.choice(list(GoodEffects))
@@ -330,9 +370,40 @@ def main():
               
             hitGood = False
 
-        if elapsed_time > 10:
+        
+
+      
+
+      
+
+
+        print(round(bowser_fight_starttime - elapsed_time))
+
+        if(  bowser_fight_starttime - elapsed_time > 3 or round(bowser_fight_starttime - elapsed_time) <= 0 ):
+                current_countdown_number = None         
+        else:
+            current_countdown_number = round(bowser_fight_starttime - elapsed_time)           
+               
+
+
+       
+
+        if elapsed_time > bowser_fight_starttime - 0.5:
+
+          
+
+            draw_transition_screen(bowser_transition_screen, "Bowser" )
+
+            pygame.mixer.music.pause()
+            pygame.time.delay(4000)
+
+            powerup_channel = sound_channels[3]  # Use the second sound channel
+            powerup_channel.play(bowser_start_sound, 0)
+
             battle_master1 = True
             current_time = time.time()
+
+            
 
             print("You came for the master HUA")
 
@@ -362,6 +433,9 @@ def main():
                 
 
                 if player.colliderect(Bowser):
+                    bowser_laugh_sound_channel = sound_channels[5] 
+                    bowser_laugh_sound_channel.play(bowser_laugh_sound, 1)
+                    pygame.time.delay(2000)
                     GameLoss()
                     break
                         
@@ -484,13 +558,14 @@ def main():
 
                 print(bowser_state)
 
-                drawBossBowser(player, player_health, Bowser)         
+                drawBossBowser(player, player_health, Bowser)  
 
+    
 
         
          
-
-        draw(player, elapsed_time, stars, powerups, current_player_image, player_health)
+        
+        draw(player, elapsed_time, stars, powerups, current_player_image, player_health, current_countdown_number)
         
         
 
