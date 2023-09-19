@@ -302,6 +302,9 @@ def main():
                 run = False
                 break
 
+        print("star count",star_count)
+        print("star add inc",star_add_increment)
+
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT] and player.x - PLAYER_VEL >= 0:
             player.x -= PLAYER_VEL
