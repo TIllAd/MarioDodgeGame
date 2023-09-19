@@ -1,3 +1,5 @@
+import sys
+import webbrowser
 import pygame
 import time
 import random
@@ -33,6 +35,13 @@ class GoodEffects(Enum):
 
     #
     # SmallSize = 2
+
+class GameState(Enum):
+    MENU_STATE = 0
+    GAMEPLAY_STATE = 1
+    BOSS_FIGHT_STATE = 2
+    GAME_OVER_STATE = 3
+
 
 class Fireball:
     def __init__(self, x, y, target_x, target_y):
@@ -234,12 +243,8 @@ def GameLoss():
 
 def main():
     run = True
-
-
-
     player = pygame.Rect(200, HEIGHT - PLAYER_HEIGHT,
-                         PLAYER_WIDTH, PLAYER_HEIGHT)
-    
+                         PLAYER_WIDTH, PLAYER_HEIGHT) 
   
     player_invincible = False
     player_smallsize = False
@@ -262,7 +267,7 @@ def main():
     hitBAD = False
     is_blinking = False
     player_health = 3
-    bowser_fight_starttime = 2
+    bowser_fight_starttime = 20
     player_play_again = False
     player_game_loss  = False
     time_last_countdown = 0
@@ -272,179 +277,19 @@ def main():
     player_bowser_positioned = False
     time_between_fireballs = 2
     fireball_timer = 0
+    star_count = 0
+    powerup_count = 0
+    current_player_image = player_image
+    current_state = GameState.MENU_STATE
 
-    while run:
-
-        star_count += clock.tick(60)
-        powerup_count += clock.tick(40)
-        elapsed_time = time.time() - start_time
-
-        if powerup_count > powerup_add_increment:
-            for _ in range(1):
-                powerup_x = random.randint(0, WIDTH - STAR_WIDTH)
-                powerup = pygame.Rect(
-                    powerup_x, -STAR_HEIGHT, STAR_WIDTH, STAR_HEIGHT)
-                powerups.append(powerup)
-                powerup_add_increment = max(200, powerup_add_increment - 50)
-                powerup_count = 0
-
-        if star_count > star_add_increment:
-            for _ in range(3):
-                star_x = random.randint(0, WIDTH - STAR_WIDTH)
-                star = pygame.Rect(star_x, -STAR_HEIGHT,
-                                   STAR_WIDTH, STAR_HEIGHT)
-                stars.append(star)
-                star_add_increment = max(200, star_add_increment - 50)
-                star_count = 0
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                run = False
-                break
-
-        print("star count",star_count)
-        print("star add inc",star_add_increment)
-
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_LEFT] and player.x - PLAYER_VEL >= 0:
-            player.x -= PLAYER_VEL
-        if keys[pygame.K_RIGHT] and player.x + PLAYER_VEL + player.width <= WIDTH:
-            player.x += PLAYER_VEL
-        if keys[pygame.K_UP] and player.y > 0:
-            player.y -= PLAYER_VEL
-        if keys[pygame.K_DOWN] and player.y + player.height + PLAYER_VEL < HEIGHT:
-            player.y += PLAYER_VEL
-
-        if player.y + player.height <= HEIGHT:
-            player.y += PLAYER_VEL / 2.5
-
-        if player_invincible:
-            invincibility_effect_duration -= clock.tick(60) / 1000
-          
-            print(invincibility_effect_duration)
-            
-            alpha = max(0, int((invincibility_effect_duration / 150) * 255))
-            current_player_image = set_image_alpha(player_image_powerup, alpha)
-        
-            if invincibility_effect_duration < 1:
-                is_blinking = not is_blinking
-                if is_blinking:
-                    alpha = max(0, int((invincibility_effect_duration / 150) * 255))
-                    current_player_image = set_image_alpha(player_image_powerup, alpha)
-                else:
-                    current_player_image = player_image
-               
-
-           
-
-        if player_smallsize:
-            
-            if PLAYER_HEIGHT == player.height and PLAYER_WIDTH == player.width:
-                player, current_player_image = halfPLayerSize(player, current_player_image)
-            
-            print(small_size_duration)
-            
-            if small_size_duration <= 0:
-                player_smallsize = False  
-                current_player_image = player_image
-                player.height = PLAYER_HEIGHT
-                player.width = PLAYER_WIDTH
-           
-
-            small_size_duration -= clock.tick(60) / 1000
-            
-        
-
-
-        if invincibility_effect_duration <= 0:
-            player_invincible = False
-            
-
-            invincibility_effect_duration = 0
-            current_player_image = player_image
-         
-
-        for powerup in powerups[:]:
-            powerup.y += POWERUP_VEL
-            if powerup.y > HEIGHT:
-                powerups.remove(powerup)
-            elif powerup.y + powerup.height >= player.y and powerup.colliderect(player):
-                powerups.remove(powerup)
-                hitGood = True
-
-        for star in stars[:]:
-            star.y += STAR_VEL
-            if star.y > HEIGHT:
-                stars.remove(star)
-            elif star.y + star.height >= player.y and star.colliderect(player):
-                stars.remove(star)
-                hitBAD = True
-                break
-
-        if hitBAD and player_invincible == False:
-
-            player_health -= 1
-            
-
-            print("subtracting player health")
-
-            if player_health < 0:
-                gameloss_channel = sound_channels[4] 
-                gameloss_channel.play(gameloss_sound, loops=-1)
-                pygame.time.delay(4000)
-                GameLoss()
-                
-
-                break
-            hitBAD = False
-        
-       
-
-
-
-        if hitGood:
-
-          
-            powerup_channel = sound_channels[1]  
-            powerup_channel.play(powerup_sound, 1)
-
-            selected_good_effect = random.choice(list(GoodEffects))
-
-            if selected_good_effect == GoodEffects.SmallSize:
-                player_smallsize = True
-                small_size_duration = 4
-            if selected_good_effect == GoodEffects.Invincibility:
-                player_invincible = True
-                invincibility_effect_duration = 1
-            if selected_good_effect == GoodEffects.ExtraLife:
-                player_health += 1
-                gameloss_channel = sound_channels[2] 
-                gameloss_channel.play(player_healthup, 1)
-           
-
-              
-            hitGood = False
-
-        
-
-      
-
-      
-
-
-        print(round(bowser_fight_starttime - elapsed_time))
-
-        if(  bowser_fight_starttime - elapsed_time > 3 or round(bowser_fight_starttime - elapsed_time) <= 0 ):
-                current_countdown_number = None         
-        else:
-            current_countdown_number = round(bowser_fight_starttime - elapsed_time)           
-               
+    powerup_add_increment = 3000
+    star_add_increment = 1000
+  
 
 
        
 
-        if elapsed_time > bowser_fight_starttime - 0.5:
-            
+    def boss_fight_state():
 
             Bowser = pygame.Rect(300, HEIGHT - BOWSER_HEIGHT, BOWSER_WIDTH, BOWSER_HEIGHT)
 
@@ -457,19 +302,17 @@ def main():
             powerup_channel.play(bowser_start_sound, 0)
 
             battle_master1 = True
-            
+            fireball_timer = 0
 
             bowser_state , bowser_idle_start_time = setBowserState("Idle")
-            
-            while battle_master1 and run:
+            player.x , player.y = WIDTH -100,  HEIGHT - 100
+            Bowser.x, Bowser.y = 100 , 100
+
+            while battle_master1:
                 start_time = time.time()
                 clock.tick(30)
 
-                #avoid insta lose
-                if(player_bowser_positioned == False):
-                    Bowser.x, Bowser.y = 100 , 100
-                    player.x , player.y = WIDTH -100,  HEIGHT - 100
-                    player_bowser_positioned = True
+                
 
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
@@ -607,40 +450,244 @@ def main():
 
                     
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                print(bowser_state)
+               
 
                 drawBossBowser(player, player_health, Bowser, fireballs ,bowser_state)  
 
+   
+          
+
+
+    def menu_state():
+        menu_font = pygame.font.Font(None, 36)
+        options = ["Start Game", "Options", "Quit", "website creator"]
+        selected_option = 0
+        running_menu = True
+        while running_menu:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_DOWN:
+                        selected_option = (selected_option + 1) % len(options)
+                    elif event.key == pygame.K_UP:
+                        selected_option = (selected_option - 1) % len(options)
+                    elif event.key == pygame.K_RETURN:
+                        if selected_option == 0:  # Start Game
+                            print("Starting the game!")
+                            game_start()
+                            running_menu = False
+                            break
+                        elif selected_option == 1:  # Options
+                            print("Opening options menu!")
+                            # Add your options menu logic here
+                        elif selected_option == 2:  # Quit
+                            pygame.quit()
+                            sys.exit()
+                        elif selected_option == 3:
+                                url = "https://www.youtube.com/watch?v=2h1BJCxtNes"
+                                webbrowser.open(url, new=2)
+            WIN.fill((0, 0, 0))
+            for i, option in enumerate(options):
+                text = menu_font.render(option, True, (255, 255, 255))
+                x = (WIDTH - text.get_width()) // 2
+                y = (HEIGHT - text.get_height()) // 2 + i * 40
+                if i == selected_option:
+                    pygame.draw.rect(WIN, (255, 0, 0), (x - 10, y, text.get_width() + 20, text.get_height()), 2)
+                WIN.blit(text, (x, y))
+
+            pygame.display.update()
+
+
+    def game_over_state():
+        print("game_over_state")
+
+   # Define a background color (e.g., black)
+    BACKGROUND_COLOR = (0, 0, 0)
+
+# In your game_start function or relevant place where you want to clear the screen:
+    def game_start():
+        global current_state  # Declare current_state as global
+    # Your game initialization code here
+        current_state = GameState.GAMEPLAY_STATE
+
+    while run:
+
+         
+        elapsed_time = time.time() - start_time
+        if  current_state == GameState.GAMEPLAY_STATE:
+                
+
+
+            star_count += clock.tick(60)
+            powerup_count += clock.tick(40)
+            elapsed_time = time.time() - start_time
+
+            if powerup_count > powerup_add_increment:
+                for _ in range(1):
+                    powerup_x = random.randint(0, WIDTH - STAR_WIDTH)
+                    powerup = pygame.Rect(
+                        powerup_x, -STAR_HEIGHT, STAR_WIDTH, STAR_HEIGHT)
+                    powerups.append(powerup)
+                    powerup_add_increment = max(200, powerup_add_increment - 50)
+                    powerup_count = 0
+
+            if star_count > star_add_increment:
+                for _ in range(3):
+                    star_x = random.randint(0, WIDTH - STAR_WIDTH)
+                    star = pygame.Rect(star_x, -STAR_HEIGHT,
+                                    STAR_WIDTH, STAR_HEIGHT)
+                    stars.append(star)
+                    star_add_increment = max(200, star_add_increment - 50)
+                    star_count = 0
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    run = False
+                    break
+
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_LEFT] and player.x - PLAYER_VEL >= 0:
+                player.x -= PLAYER_VEL
+            if keys[pygame.K_RIGHT] and player.x + PLAYER_VEL + player.width <= WIDTH:
+                player.x += PLAYER_VEL
+            if keys[pygame.K_UP] and player.y > 0:
+                player.y -= PLAYER_VEL
+            if keys[pygame.K_DOWN] and player.y + player.height + PLAYER_VEL < HEIGHT:
+                player.y += PLAYER_VEL
+
+            if player.y + player.height <= HEIGHT:
+                player.y += PLAYER_VEL / 2.5
+
+
+            if player_invincible:
+                invincibility_effect_duration -= clock.tick(60) / 1000
+            
+                
+                alpha = max(0, int((invincibility_effect_duration / 150) * 255))
+                current_player_image = set_image_alpha(player_image_powerup, alpha)
+            
+                if invincibility_effect_duration < 1:
+                    is_blinking = not is_blinking
+                    if is_blinking:
+                        alpha = max(0, int((invincibility_effect_duration / 150) * 255))
+                        current_player_image = set_image_alpha(player_image_powerup, alpha)
+                    else:
+                        current_player_image = player_image
+                
+
+            
+
+            if player_smallsize:
+                
+                if PLAYER_HEIGHT == player.height and PLAYER_WIDTH == player.width:
+                    player, current_player_image = halfPLayerSize(player, current_player_image)
+                
+                print(small_size_duration)
+                
+                if small_size_duration <= 0:
+                    player_smallsize = False  
+                    current_player_image = player_image
+                    player.height = PLAYER_HEIGHT
+                    player.width = PLAYER_WIDTH
+            
+                small_size_duration -= clock.tick(60) / 1000
+                
+            
+        
+
+            for powerup in powerups[:]:
+                powerup.y += POWERUP_VEL
+                if powerup.y > HEIGHT:
+                    powerups.remove(powerup)
+                elif powerup.y + powerup.height >= player.y and powerup.colliderect(player):
+                    powerups.remove(powerup)
+                    powerup_channel = sound_channels[1]  
+                    powerup_channel.play(powerup_sound, 1)
+
+                    selected_good_effect = random.choice(list(GoodEffects))
+
+                    if selected_good_effect == GoodEffects.SmallSize:
+                        player_smallsize = True
+                        small_size_duration = 4
+                    if selected_good_effect == GoodEffects.Invincibility:
+                        player_invincible = True
+                        invincibility_effect_duration = 1
+                    if selected_good_effect == GoodEffects.ExtraLife:
+                        player_health += 1
+                        gameloss_channel = sound_channels[2] 
+                        gameloss_channel.play(player_healthup, 1)
+
+
+            for star in stars[:]:
+                star.y += STAR_VEL
+                if star.y > HEIGHT:
+                    stars.remove(star)
+                elif star.y + star.height >= player.y and star.colliderect(player):
+                    stars.remove(star)
+                    
+                    if(player_invincible == False):
+
+                        player_health -= 1
+        
+                        if player_health < 0:
+                            gameloss_channel = sound_channels[4] 
+                            gameloss_channel.play(gameloss_sound, loops=-1)
+                            pygame.time.delay(4000)
+                            GameLoss()      
+                        hitBAD = False
+
+                    break
     
 
+            if(  bowser_fight_starttime - elapsed_time > 3 or round(bowser_fight_starttime - elapsed_time) <= 0 ):
+                    current_countdown_number = None         
+            else:
+                current_countdown_number = round(bowser_fight_starttime - elapsed_time)  
+
+
+            if invincibility_effect_duration <= 0:
+                player_invincible = False
+                
+
+                invincibility_effect_duration = 0
+                current_player_image = player_image
+            
+            draw(player, elapsed_time, stars, powerups, current_player_image, player_health, current_countdown_number)
+
+
+
+
+        elif current_state == GameState.MENU_STATE:
+            menu_state()
+        elif current_state == GameState.BOSS_FIGHT_STATE:
+            boss_fight_state()
+        elif current_state == GameState.GAME_OVER_STATE:
+            game_over_state()
+    
+  
+
+     
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+                break
+
+
+                 
+               
+
+
+        print(elapsed_time )
+
+        if elapsed_time > bowser_fight_starttime - 0.5:
+
+           
+            current_state = boss_fight_state()
+
+
         
-            print("bowser x,y", Bowser.x , Bowser.y)
-        
-        draw(player, elapsed_time, stars, powerups, current_player_image, player_health, current_countdown_number)
         
         
 
