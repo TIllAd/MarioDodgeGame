@@ -82,9 +82,17 @@ BG_Bowser = pygame.transform.scale(BG_Bowser,(WIDTH, HEIGHT))
 bowser_transition_screen = pygame.image.load("Media/Graphics/bowser_transition_screen.jpg")
 bowser_transition_screen = pygame.transform.scale(bowser_transition_screen,(WIDTH, HEIGHT))
 
-bowser_image = pygame.image.load("Media/Graphics/Bowser.png")
-bowser_image = pygame.transform.scale(bowser_image,(BOWSER_WIDTH, BOWSER_HEIGHT))
-fireball_image = pygame.image.load("Media/Graphics/fireball.webp")
+bowser_idle = pygame.image.load("Media/Graphics/Bowser.png")
+bowser_idle = pygame.transform.scale(bowser_idle,(BOWSER_WIDTH, BOWSER_HEIGHT))
+bowser_running = pygame.image.load("Media/Graphics/bowser_running.jpeg")
+bowser_running = pygame.transform.scale(bowser_running,(BOWSER_WIDTH, BOWSER_HEIGHT))
+bowser_angry = pygame.image.load("Media/Graphics/bowser_shooting.jpeg")
+bowser_angry = pygame.transform.scale(bowser_angry,(BOWSER_WIDTH, BOWSER_HEIGHT))
+
+
+
+
+fireball_image = pygame.image.load("Media/Graphics/fireball.png")
 fireball_image = pygame.transform.scale(fireball_image,(BOWSER_WIDTH, BOWSER_HEIGHT))
 
 
@@ -113,7 +121,7 @@ def draw(player, elapsed_time, stars, powerups, current_player_image, player_hea
     WIN.blit(BG, (0, 0))
     player_outline = player.copy()
     player_outline.inflate_ip(5, 5)
-    pygame.draw.rect(WIN, (255, 0, 0), player_outline, 2)
+   # pygame.draw.rect(WIN, (255, 0, 0), player_outline, 2)
     WIN.blit(current_player_image, (player.x, player.y))
 
     time_text = FONT.render(f"Time: {round(elapsed_time)}s", 1, "white")
@@ -133,7 +141,18 @@ def draw(player, elapsed_time, stars, powerups, current_player_image, player_hea
 
     pygame.display.update()
 
-def drawBossBowser(player, player_health, Bowser, fireballs):
+def drawBossBowser( player, player_health, Bowser, fireballs ,bowser_state):
+
+
+    if bowser_state == "Idle":
+        bowser_image = bowser_idle
+    elif bowser_state == "Charging":
+        bowser_image = bowser_running
+    elif bowser_state == "Angry":
+        bowser_image = bowser_angry
+
+
+
     WIN.blit(BG_Bowser, (0,0))
     WIN.blit(bowser_image, (Bowser.x, Bowser.y))
     WIN.blit(player_image, (player.x, player.y))
@@ -159,9 +178,6 @@ def draw_countdown(start_number):
     
     print("reached2")
      
-    
-    
-
 
 
 def set_image_alpha(image, alpha):
@@ -187,13 +203,14 @@ def setBowserState(state):
     
     if state == "Idle":
         bowser_idle_start_time = time.time()
+       
         return "Idle" , time.time()
     elif state == "Charging":
-        bowser_charging_start_time = time.time()
+        
         return "Charging", time.time()
     elif state == "Angry":
         return "Angry" , time.time()
-    
+ 
 
     bowser_state = state
     
@@ -219,13 +236,11 @@ def main():
     run = True
 
 
-    original_player_image = player_image  # Save the original image
-    original_player_size = (PLAYER_WIDTH, PLAYER_HEIGHT)
 
     player = pygame.Rect(200, HEIGHT - PLAYER_HEIGHT,
                          PLAYER_WIDTH, PLAYER_HEIGHT)
     
-    Bowser = pygame.Rect(300, HEIGHT - BOWSER_HEIGHT, BOWSER_WIDTH, BOWSER_HEIGHT)
+  
     player_invincible = False
     player_smallsize = False
     clock = pygame.time.Clock()
@@ -247,7 +262,7 @@ def main():
     hitBAD = False
     is_blinking = False
     player_health = 3
-    bowser_fight_starttime = 10
+    bowser_fight_starttime = 2
     player_play_again = False
     player_game_loss  = False
     time_last_countdown = 0
@@ -426,8 +441,9 @@ def main():
        
 
         if elapsed_time > bowser_fight_starttime - 0.5:
+            
 
-          
+            Bowser = pygame.Rect(300, HEIGHT - BOWSER_HEIGHT, BOWSER_WIDTH, BOWSER_HEIGHT)
 
             draw_transition_screen(bowser_transition_screen, "Bowser" )
 
@@ -439,10 +455,6 @@ def main():
 
             battle_master1 = True
             
-
-            
-
-            print("You came for the master HUA")
 
             bowser_state , bowser_idle_start_time = setBowserState("Idle")
             
@@ -487,21 +499,20 @@ def main():
                 
                 bowser_charge_duration = 3
                 bowser_charge_speed = 5
-                bowser_idle_duration = 5
+                bowser_idle_duration = 100
                 bowser_idle_random_move_duration = 2  # Adjust the random move duration as needed
                 bowser_idle_random_move_start_time = time.time()
                 bowser_idle_random_move_direction = (0, 0)
                 bowser_idle_speed = 3
                 
 
-                tmp = ""
+                
                 
                 if bowser_state == "Idle":
                    
                     time_elapsed_Bowser = time.time() - bowser_idle_start_time  # Calculate elapsed time
-                    
 
-                    if time_elapsed_Bowser >= bowser_idle_duration:
+                    if time.time()- bowser_idle_start_time  > 10 :
                        
                         bowser_state, bowser_charging_start_time = setBowserState("Charging")
                         
@@ -555,21 +566,23 @@ def main():
                         Bowser.x += direction_x * bowser_charging_speed
                         Bowser.y += direction_y * bowser_charging_speed
                         print(bowser_charging_start_time - time.time())
-                        if(distance <= bowser_charging_speed or time.time()- bowser_charging_start_time  > 10 ):
-                            bowser_state, _ = setBowserState("Angry")
 
+                        if(distance <= bowser_charging_speed or time.time()- bowser_charging_start_time  > 10 ):
+                            bowser_state, bowser_angry_start_time = setBowserState("Angry")
+
+                       
                     
                     
 
                 if(bowser_state == "Angry"):
                     
+                    bowser_image = bowser_angry
                     fireball_timer += clock.tick(60) /1000
 
                     print("clock tick",clock.tick(60) /10)
                     print(fireball_timer)
                 
                     if  fireball_timer>= time_between_fireballs:
-                        # Create a fireball and set its position and velocity
                         fireball = Fireball(Bowser.x, Bowser.y, player.x, player.y)
                         fireballs.append(fireball)
                         fireball_timer = 0  # Reset the timer
@@ -577,17 +590,19 @@ def main():
                     for fireball in fireballs:
                         fireball.update()
                         if fireball.colliderect(player):
-                        # Handle player collision with the fireball (e.g., decrease player health)
                             GameLoss()
                         if fireball.out_of_bounds():
                             fireballs.remove(fireball)
-                        # Remove fireballs that are out of bounds
-                    # Render the fireball on the screen
+                      
 
-                # Inside your drawBossBowser function, you can render the fireballs along with Bowser
-                    for fireball in fireballs:
-                        WIN.blit(fireball_image, (fireball.x, fireball.y))
+                    #for fireball in fireballs:
+                    #    WIN.blit(fireball_image, (fireball.x, fireball.y))
+                    print("HERE:" , time.time() - bowser_angry_start_time)
 
+                    if time.time() - bowser_angry_start_time > 20:
+                        bowser_state , bowser_idle_start_time = setBowserState("Idle")
+
+                    
 
 
 
@@ -615,12 +630,12 @@ def main():
 
                 print(bowser_state)
 
-                drawBossBowser(player, player_health, Bowser, fireballs)  
+                drawBossBowser(player, player_health, Bowser, fireballs ,bowser_state)  
 
     
 
         
-         
+            print("bowser x,y", Bowser.x , Bowser.y)
         
         draw(player, elapsed_time, stars, powerups, current_player_image, player_health, current_countdown_number)
         
