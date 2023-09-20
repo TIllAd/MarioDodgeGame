@@ -1,3 +1,4 @@
+import sys
 import pygame
 import time
 import random
@@ -141,7 +142,7 @@ def draw(player, elapsed_time, stars, powerups, current_player_image, player_hea
 
     pygame.display.update()
 
-def drawBossBowser( player, player_health, Bowser, fireballs ,bowser_state):
+def drawBossBowser( player, player_health, Bowser, fireballs ,bowser_state, current_time):
 
 
     if bowser_state == "Idle":
@@ -151,11 +152,14 @@ def drawBossBowser( player, player_health, Bowser, fireballs ,bowser_state):
     elif bowser_state == "Angry":
         bowser_image = bowser_angry
 
+    current_message = FONT.render(f"GOAl: Survive 60 Seconds {(current_time)} currently", 1, "white")
 
 
     WIN.blit(BG_Bowser, (0,0))
     WIN.blit(bowser_image, (Bowser.x, Bowser.y))
     WIN.blit(player_image, (player.x, player.y))
+    WIN.blit(current_message, (10, 10))
+
 
     for fireball in fireballs:
         WIN.blit(fireball_image, (fireball.x, fireball.y))
@@ -170,16 +174,10 @@ def draw_transition_screen(background, displaytext):
     pygame.display.update()
 
 def draw_countdown(start_number):
-    print("reached")
     countdown = FONT.render(f" {round(start_number)}", 1, "white")
     WIN.blit(countdown, (WIDTH/2 , HEIGHT/2))
-
     pygame.display.update()
     
-    print("reached2")
-     
-
-
 def set_image_alpha(image, alpha):
 
     return image.copy().convert_alpha()
@@ -230,13 +228,25 @@ def GameLoss():
     pygame.time.delay(4000)
     pygame.quit()
     
+def game_won():
+ 
+    WIN.fill("white")
+
+    winning_message = FONT.render(f"Congratulations! You Survived for {60} seconds!", 1, "black")
+    WIN.blit(winning_message,(WIDTH/4 , HEIGHT/2))
+    
+
+
+    
+    pygame.display.flip()
+    pygame.time.wait(3000)  
+    pygame.quit()
+    sys.exit()
     
 
 def main():
     run = True
-
-
-
+    
     player = pygame.Rect(200, HEIGHT - PLAYER_HEIGHT,
                          PLAYER_WIDTH, PLAYER_HEIGHT)
     
@@ -262,16 +272,12 @@ def main():
     hitBAD = False
     is_blinking = False
     player_health = 3
-    bowser_fight_starttime = 2
-    player_play_again = False
-    player_game_loss  = False
-    time_last_countdown = 0
-    time_elapsed_countdown = None
-   
-    current_cd_display = None
+    bowser_fight_starttime = 60
+    
     player_bowser_positioned = False
     time_between_fireballs = 2
     fireball_timer = 0
+    beat_game_time = 60
 
     while run:
 
@@ -457,13 +463,14 @@ def main():
             powerup_channel.play(bowser_start_sound, 0)
 
             battle_master1 = True
+            start_time_bowser = time.time()
             
 
             bowser_state , bowser_idle_start_time = setBowserState("Idle")
             
             while battle_master1 and run:
-                start_time = time.time()
                 clock.tick(30)
+                current_message = round(time.time() - start_time_bowser)
 
                 #avoid insta lose
                 if(player_bowser_positioned == False):
@@ -500,16 +507,14 @@ def main():
                         
                     
                 
-                bowser_charge_duration = 3
-                bowser_charge_speed = 5
-                bowser_idle_duration = 100
-                bowser_idle_random_move_duration = 2  # Adjust the random move duration as needed
-                bowser_idle_random_move_start_time = time.time()
-                bowser_idle_random_move_direction = (0, 0)
+    
                 bowser_idle_speed = 3
                 
 
-                
+                if current_message >= beat_game_time:
+                    game_won()
+
+
                 
                 if bowser_state == "Idle":
                    
@@ -633,7 +638,7 @@ def main():
 
                 print(bowser_state)
 
-                drawBossBowser(player, player_health, Bowser, fireballs ,bowser_state)  
+                drawBossBowser(player, player_health, Bowser, fireballs ,bowser_state, current_message)  
 
     
 
