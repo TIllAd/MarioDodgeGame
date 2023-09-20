@@ -15,25 +15,17 @@ pygame.display.set_caption("MarioDodgeGame")
 PLAYER_WIDTH = 40
 PLAYER_HEIGHT = 60
 PLAYER_VEL = 5
-
 BOWSER_WIDTH = 100
 BOWSER_HEIGHT = 150
-
-
 STAR_HEIGHT = 10
 STAR_WIDTH = 20
 STAR_VEL = 3
-
 POWERUP_VEL = 1
-
 
 class GoodEffects(Enum):
     Invincibility = 1
     SmallSize = 2
     ExtraLife = 3
-
-    #
-    # SmallSize = 2
 
 class Fireball:
     def __init__(self, x, y, target_x, target_y):
@@ -60,13 +52,7 @@ class Fireball:
         return pygame.Rect(self.x, self.y, self.image.get_width(), self.image.get_height()).colliderect(rect)
 
                     
-                    
-
-
-
 sound_channels = [pygame.mixer.Channel(i) for i in range(8)]
-
-
 game_music = pygame.mixer.Sound("Media/Audio/GameSound.mp3")
 game_music_channel = pygame.mixer.find_channel()
 game_music_channel.play(game_music, loops=-1)
@@ -90,20 +76,14 @@ bowser_running = pygame.transform.scale(bowser_running,(BOWSER_WIDTH, BOWSER_HEI
 bowser_angry = pygame.image.load("Media/Graphics/bowser_shooting.jpeg")
 bowser_angry = pygame.transform.scale(bowser_angry,(BOWSER_WIDTH, BOWSER_HEIGHT))
 
-
-
-
 fireball_image = pygame.image.load("Media/Graphics/fireball.png")
 fireball_image = pygame.transform.scale(fireball_image,(BOWSER_WIDTH, BOWSER_HEIGHT))
-
 
 player_image = pygame.image.load("Media/Graphics/Mario.png")
 player_image = pygame.transform.scale(player_image,(PLAYER_WIDTH,PLAYER_HEIGHT) )
 
 star_image = pygame.image.load("Media/Graphics/GreenShell.png")
 star_image = pygame.transform.scale(star_image, (STAR_WIDTH, STAR_HEIGHT))
-
-
 
 powerup_image = pygame.image.load("Media/Graphics/PowerUp.png")
 powerup_image = pygame.transform.scale(
@@ -116,15 +96,11 @@ player_image_powerup = pygame.transform.scale(
 current_player_image = player_image
 FONT = pygame.font.SysFont("comicsans", 30)
 
-
 def draw(player, elapsed_time, stars, powerups, current_player_image, player_health, current_countdown_number):
-
     WIN.blit(BG, (0, 0))
     player_outline = player.copy()
     player_outline.inflate_ip(5, 5)
-   # pygame.draw.rect(WIN, (255, 0, 0), player_outline, 2)
     WIN.blit(current_player_image, (player.x, player.y))
-
     time_text = FONT.render(f"Time: {round(elapsed_time)}s", 1, "white")
     health_text = FONT.render(f"Health: {player_health}", 1 , "red")
     WIN.blit(time_text, (10, 10))
@@ -144,7 +120,6 @@ def draw(player, elapsed_time, stars, powerups, current_player_image, player_hea
 
 def drawBossBowser( player, player_health, Bowser, fireballs ,bowser_state, current_time):
 
-
     if bowser_state == "Idle":
         bowser_image = bowser_idle
     elif bowser_state == "Charging":
@@ -154,12 +129,10 @@ def drawBossBowser( player, player_health, Bowser, fireballs ,bowser_state, curr
 
     current_message = FONT.render(f"GOAl: Survive 60 Seconds {(current_time)} currently", 1, "white")
 
-
     WIN.blit(BG_Bowser, (0,0))
     WIN.blit(bowser_image, (Bowser.x, Bowser.y))
     WIN.blit(player_image, (player.x, player.y))
     WIN.blit(current_message, (10, 10))
-
 
     for fireball in fireballs:
         WIN.blit(fireball_image, (fireball.x, fireball.y))
@@ -234,22 +207,16 @@ def game_won():
 
     winning_message = FONT.render(f"Congratulations! You Survived for {60} seconds!", 1, "black")
     WIN.blit(winning_message,(WIDTH/4 , HEIGHT/2))
-    
-
-
-    
     pygame.display.flip()
     pygame.time.wait(3000)  
     pygame.quit()
     sys.exit()
-    
 
 def main():
     run = True
-    
+
     player = pygame.Rect(200, HEIGHT - PLAYER_HEIGHT,
                          PLAYER_WIDTH, PLAYER_HEIGHT)
-    
   
     player_invincible = False
     player_smallsize = False
@@ -308,9 +275,6 @@ def main():
                 run = False
                 break
 
-        print("star count",star_count)
-        print("star add inc",star_add_increment)
-
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT] and player.x - PLAYER_VEL >= 0:
             player.x -= PLAYER_VEL
@@ -326,9 +290,7 @@ def main():
 
         if player_invincible:
             invincibility_effect_duration -= clock.tick(60) / 1000
-          
-            print(invincibility_effect_duration)
-            
+                    
             alpha = max(0, int((invincibility_effect_duration / 150) * 255))
             current_player_image = set_image_alpha(player_image_powerup, alpha)
         
@@ -340,16 +302,11 @@ def main():
                 else:
                     current_player_image = player_image
                
-
-           
-
         if player_smallsize:
             
             if PLAYER_HEIGHT == player.height and PLAYER_WIDTH == player.width:
                 player, current_player_image = halfPLayerSize(player, current_player_image)
-            
-            print(small_size_duration)
-            
+                        
             if small_size_duration <= 0:
                 player_smallsize = False  
                 current_player_image = player_image
@@ -359,8 +316,6 @@ def main():
 
             small_size_duration -= clock.tick(60) / 1000
             
-        
-
 
         if invincibility_effect_duration <= 0:
             player_invincible = False
@@ -391,9 +346,6 @@ def main():
 
             player_health -= 1
             
-
-            print("subtracting player health")
-
             if player_health < 0:
                 gameloss_channel = sound_channels[4] 
                 gameloss_channel.play(gameloss_sound, loops=-1)
@@ -404,10 +356,6 @@ def main():
                 break
             hitBAD = False
         
-       
-
-
-
         if hitGood:
 
           
@@ -431,24 +379,11 @@ def main():
               
             hitGood = False
 
-        
-
-      
-
-      
-
-
-        print(round(bowser_fight_starttime - elapsed_time))
-
         if(  bowser_fight_starttime - elapsed_time > 3 or round(bowser_fight_starttime - elapsed_time) <= 0 ):
                 current_countdown_number = None         
         else:
             current_countdown_number = round(bowser_fight_starttime - elapsed_time)           
                
-
-
-       
-
         if elapsed_time > bowser_fight_starttime - 0.5:
             
 
@@ -503,10 +438,7 @@ def main():
                     bowser_laugh_sound_channel.play(bowser_laugh_sound, 1)
                     pygame.time.delay(2000)
                     GameLoss()
-                    break
-                        
-                    
-                
+                    break                            
     
                 bowser_idle_speed = 3
                 
@@ -523,9 +455,7 @@ def main():
                     if time.time()- bowser_idle_start_time  > 10 :
                        
                         bowser_state, bowser_charging_start_time = setBowserState("Charging")
-                        
-
-                        
+                                     
                     else:
 
                         destination_random_x = random.choice([0, WIDTH, 0, WIDTH])
@@ -549,18 +479,14 @@ def main():
 
                     time_elapsed_Bowser = time.time() - bowser_charging_start_time
 
-                    print("Time Elsapes" ,time_elapsed_Bowser)
 
                     if time_elapsed_Bowser < 4:
-                            # Bowser stands still for 4 seconds
                             Bowser.x += 0
                             Bowser.y += 0
                     else:
                             
                         bowser_charging_speed = 4
-                        print ("charging")
 
-                    
                         direction_x = player.x - Bowser.x
                         direction_y = player.y - Bowser.y
 
@@ -573,22 +499,14 @@ def main():
 
                         Bowser.x += direction_x * bowser_charging_speed
                         Bowser.y += direction_y * bowser_charging_speed
-                        print(bowser_charging_start_time - time.time())
 
                         if(distance <= bowser_charging_speed or time.time()- bowser_charging_start_time  > 10 ):
                             bowser_state, bowser_angry_start_time = setBowserState("Angry")
-
-                       
-                    
-                    
+           
 
                 if(bowser_state == "Angry"):
                     
-                    bowser_image = bowser_angry
-                    fireball_timer += clock.tick(60) /1000
-
-                    print("clock tick",clock.tick(60) /10)
-                    print(fireball_timer)
+                    fireball_timer += clock.tick(60) /1000          
                 
                     if  fireball_timer>= time_between_fireballs:
                         fireball = Fireball(Bowser.x, Bowser.y, player.x, player.y)
@@ -601,57 +519,14 @@ def main():
                             GameLoss()
                         if fireball.out_of_bounds():
                             fireballs.remove(fireball)
-                      
-
-                    #for fireball in fireballs:
-                    #    WIN.blit(fireball_image, (fireball.x, fireball.y))
-                    print("HERE:" , time.time() - bowser_angry_start_time)
+                               
 
                     if time.time() - bowser_angry_start_time > 20:
                         bowser_state , bowser_idle_start_time = setBowserState("Idle")
 
-                    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                print(bowser_state)
-
                 drawBossBowser(player, player_health, Bowser, fireballs ,bowser_state, current_message)  
-
-    
-
-        
-            print("bowser x,y", Bowser.x , Bowser.y)
-        
         draw(player, elapsed_time, stars, powerups, current_player_image, player_health, current_countdown_number)
-        
-        
-
-
     pygame.quit()
-
 
 if __name__ == "__main__":
     main()
